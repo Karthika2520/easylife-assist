@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FamilyRouteImport } from './routes/family'
 import { Route as RemindersRouteImport } from './routes/reminders'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FamilyRoute = FamilyRouteImport.update({
+  id: '/family',
+  path: '/family',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RemindersRoute = RemindersRouteImport.update({
@@ -25,27 +31,31 @@ const RemindersRoute = RemindersRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/family': typeof FamilyRoute
   '/reminders': typeof RemindersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/family': typeof FamilyRoute
   '/reminders': typeof RemindersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/family': typeof FamilyRoute
   '/reminders': typeof RemindersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/reminders'
+  fullPaths: '/' | '/family' | '/reminders'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/reminders'
-  id: '__root__' | '/' | '/reminders'
+  to: '/' | '/family' | '/reminders'
+  id: '__root__' | '/' | '/family' | '/reminders'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  FamilyRoute: typeof FamilyRoute
   RemindersRoute: typeof RemindersRoute
 }
 
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/family': {
+      id: '/family'
+      path: '/family'
+      fullPath: '/family'
+      preLoaderRoute: typeof FamilyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reminders': {
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  FamilyRoute: FamilyRoute,
   RemindersRoute: RemindersRoute,
 }
 export const routeTree = rootRouteImport
