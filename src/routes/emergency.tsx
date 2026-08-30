@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Page, PageHeading } from "@/components/PageShell";
 import { useAccessibility } from "@/lib/accessibility";
-import { familyMembers } from "@/lib/mock-data";
+import { emergencyContact } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/emergency")({
   head: () => ({
@@ -11,142 +11,180 @@ export const Route = createFileRoute("/emergency")({
       {
         name: "description",
         content:
-          "Hold one large red button for three seconds to alert your emergency contact. Clear confirmation and an easy way to cancel.",
+          "Ask for emergency help in two clear steps. We show your emergency contact, your location status and the time help was requested.",
       },
       { property: "og:title", content: "Emergency SOS — Get help now | EASYLIFE" },
       {
         property: "og:description",
-        content: "Hold the red button for three seconds to call for help.",
+        content: "Two simple steps to call your emergency contact for help.",
       },
     ],
   }),
   component: EmergencyPage,
 });
 
-const HOLD_MS = 3000;
+type Step = "start" | "confirm" | "calling" | "done";
+
+function nowLabel() {
+  return new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+function DemoNote() {
+  return (
+    <p className="rounded-2xl border-2 border-border bg-muted p-4 text-body font-semibold text-foreground">
+      <span aria-hidden="true">ℹ️ </span>
+      Demo only: this is a prototype. No real call, message or location is sent.
+    </p>
+  );
+}
 
 function EmergencyPage() {
   const { t } = useAccessibility();
-  const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const contact = familyMembers[0] ?? {
-    name: "Anitha",
-    phone: "+91 98400 11223",
-  };
+  const [step, setStep] = useState<Step>("start");
+  const [time, setTime] = useState("");
 
-
-  const clear = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = null;
-  };
-
-  useEffect(() => clear, []);
-
-  const start = () => {
-    if (status !== "idle" || timerRef.current) return;
-    const startedAt = Date.now();
-    timerRef.current = setInterval(() => {
-      const pct = Math.min(100, ((Date.now() - startedAt) / HOLD_MS) * 100);
-      setProgress(pct);
-      if (pct >= 100) {
-        clear();
-        setStatus("sending");
-        window.setTimeout(() => setStatus("sent"), 1200);
-      }
-    }, 100);
-  };
-
-  const cancel = () => {
-    clear();
-    setProgress(0);
-  };
-
-  const reset = () => {
-    clear();
-    setProgress(0);
-    setStatus("idle");
-  };
+  useEffect(() => {
+    if (step !== "calling") return;
+    const id = window.setTimeout(() => {
+      setTime(nowLabel());
+      setStep("done");
+    }, 1800);
+    return () => window.clearTimeout(id);
+  }, [step]);
 
   return (
     <Page showBack>
-      <PageHeading title={t("sosTitle")} intro={t("sosIntro")} />
+      <PageHeading
+        title={t("sosTitle")}
+        intro="Ask for help in two simple steps. Nothing happens until you press Yes."
+      />
+      <DemoNote />
 
-      <div className="flex flex-col items-center gap-6 rounded-3xl border-2 border-emergency bg-emergency-soft p-6 sm:p-8">
-        {status === "sent" ? (
-          <>
-            <p aria-hidden="true" className="text-[3rem] leading-none">
-              ✅
-            </p>
-            <p
-              role="status"
-              className="max-w-2xl text-center text-h2 font-bold text-foreground"
-            >
-              {t("sosSent")}
-            </p>
-            <p className="text-lead text-foreground">
-              {contact.name} · {contact.phone}
-            </p>
+      {step === "start" ? (
+        <div className="flex flex-col items-center gap-6 rounded-3xl border-2 border-emergency bg-emergency-soft p-6 sm:p-8">
+          <button
+            type="button"
+            onClick={() => setStep("confirm")}
+            className="flex min-h-[10rem] w-full max-w-2xl flex-col items-center justify-center gap-3 rounded-3xl bg-emergency px-8 py-6 text-center text-emergency-foreground hover:opacity-95"
+          >
+            <span aria-hidden="true" className="text-[3rem] leading-none">
+              🆘
+            </span>
+            <span className="text-[1.75rem] font-bold leading-tight">
+              I need emergency help
+            </span>
+          </button>
+          <p className="text-lead text-foreground">
+            You will be asked to confirm first, so nothing happens by mistake.
+          </p>
+        </div>
+      ) : null}
+
+      {step === "confirm" ? (
+        <section
+          aria-labelledby="sos-confirm-heading"
+          className="flex flex-col gap-6 rounded-3xl border-2 border-emergency bg-emergency-soft p-6 sm:p-8"
+        >
+          <h2
+            id="sos-confirm-heading"
+            className="text-h1 font-bold leading-snug text-foreground"
+          >
+            Do you need emergency help?
+          </h2>
+          <p className="text-lead text-foreground">
+            We will call {emergencyContact.name} ({emergencyContact.relation}) on{" "}
+            {emergencyContact.phone} and share where you are.
+          </p>
+          <div className="flex flex-col gap-4 sm:flex-row">
             <button
               type="button"
-              onClick={reset}
-              className="tap-target min-h-[4rem] w-full max-w-md rounded-xl border-2 border-border-strong bg-card px-6 text-action font-semibold text-foreground hover:bg-primary-soft"
+              onClick={() => setStep("calling")}
+              className="tap-target min-h-[4.5rem] flex-1 gap-3 rounded-xl bg-emergency px-6 text-action font-bold text-emergency-foreground hover:opacity-95"
             >
-              {t("sosCancel")}
+              <span aria-hidden="true">📞</span>
+              <span>Yes, Call Now</span>
             </button>
-          </>
-        ) : (
-          <>
             <button
               type="button"
-              onPointerDown={start}
-              onPointerUp={cancel}
-              onPointerLeave={cancel}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") start();
-              }}
-              onKeyUp={cancel}
-              disabled={status === "sending"}
-              aria-describedby="sos-help"
-              className="flex min-h-[10rem] w-full max-w-2xl flex-col items-center justify-center gap-3 rounded-3xl bg-emergency px-8 py-6 text-center text-emergency-foreground hover:opacity-95 disabled:opacity-80"
+              onClick={() => setStep("start")}
+              className="tap-target min-h-[4.5rem] flex-1 rounded-xl border-2 border-border-strong bg-card px-6 text-action font-semibold text-foreground hover:bg-primary-soft"
             >
-              <span aria-hidden="true" className="text-[3rem] leading-none">
-                🆘
-              </span>
-              <span className="text-[1.75rem] font-bold leading-tight">
-                {status === "sending" ? t("sosSending") : t("sosHold")}
-              </span>
+              Cancel
             </button>
+          </div>
+        </section>
+      ) : null}
 
-            <div
-              className="h-6 w-full max-w-2xl overflow-hidden rounded-full border-2 border-emergency bg-card"
-              role="progressbar"
-              aria-label={t("sosHold")}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={Math.round(progress)}
-            >
-              <div
-                className="h-full bg-emergency"
-                style={{ width: `${status === "sending" ? 100 : progress}%` }}
-              />
+      {step === "calling" ? (
+        <section className="flex flex-col items-center gap-5 rounded-3xl border-2 border-emergency bg-emergency-soft p-8 text-center">
+          <p aria-hidden="true" className="text-[3rem] leading-none">
+            📞
+          </p>
+          <p role="status" className="text-h2 font-bold text-foreground">
+            Calling your emergency contact…
+          </p>
+          <p className="text-lead text-foreground">
+            {emergencyContact.name} · {emergencyContact.phone}
+          </p>
+          <p className="text-lead text-foreground">Please stay where you are.</p>
+        </section>
+      ) : null}
+
+      {step === "done" ? (
+        <section
+          aria-labelledby="sos-done-heading"
+          className="flex flex-col gap-6 rounded-3xl border-2 border-emergency bg-card p-6 sm:p-8"
+        >
+          <h2 id="sos-done-heading" className="text-h1 font-bold text-foreground" role="status">
+            Help has been requested
+          </h2>
+
+          <ul className="flex list-none flex-col gap-4">
+            {[
+              "Emergency contact notified",
+              "Location shared",
+              "Help request created",
+            ].map((line) => (
+              <li
+                key={line}
+                className="flex items-center gap-4 rounded-2xl bg-success-soft px-5 py-4 text-action font-bold text-success"
+              >
+                <span aria-hidden="true">✓</span>
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
+
+          <dl className="grid grid-cols-1 gap-4 text-lead text-foreground sm:grid-cols-2">
+            <div className="rounded-2xl border-2 border-border p-5">
+              <dt className="font-bold text-primary">{t("emergencyContact")}</dt>
+              <dd>
+                {emergencyContact.name} ({emergencyContact.relation})
+              </dd>
             </div>
+            <div className="rounded-2xl border-2 border-border p-5">
+              <dt className="font-bold text-primary">Phone number</dt>
+              <dd>{emergencyContact.phone}</dd>
+            </div>
+            <div className="rounded-2xl border-2 border-border p-5">
+              <dt className="font-bold text-primary">Location</dt>
+              <dd>Shared — 14 Gandhi Street, Chennai (demo)</dd>
+            </div>
+            <div className="rounded-2xl border-2 border-border p-5">
+              <dt className="font-bold text-primary">Time</dt>
+              <dd>Today at {time}</dd>
+            </div>
+          </dl>
 
-            <p id="sos-help" className="text-lead text-foreground">
-              {t("sosNoEmergency")}
-            </p>
-          </>
-        )}
-      </div>
-
-      <section aria-labelledby="sos-contact" className="card-surface flex flex-col gap-3 p-6">
-        <h2 id="sos-contact" className="text-h2 font-bold text-foreground">
-          {t("emergencyContact")}
-        </h2>
-        <p className="text-lead text-foreground">
-          {contact.name} — {contact.phone}
-        </p>
-      </section>
+          <button
+            type="button"
+            onClick={() => setStep("start")}
+            className="tap-target min-h-[4.5rem] w-full rounded-xl border-2 border-border-strong bg-card px-6 text-action font-semibold text-foreground hover:bg-primary-soft"
+          >
+            {t("sosCancel")}
+          </button>
+        </section>
+      ) : null}
     </Page>
   );
 }
