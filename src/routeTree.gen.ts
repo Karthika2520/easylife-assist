@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EmergencyRouteImport } from './routes/emergency'
+import { Route as ExplainRouteImport } from './routes/explain'
 import { Route as FamilyRouteImport } from './routes/family'
 import { Route as RemindersRouteImport } from './routes/reminders'
 
@@ -22,6 +23,11 @@ const IndexRoute = IndexRouteImport.update({
 const EmergencyRoute = EmergencyRouteImport.update({
   id: '/emergency',
   path: '/emergency',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExplainRoute = ExplainRouteImport.update({
+  id: '/explain',
+  path: '/explain',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FamilyRoute = FamilyRouteImport.update({
@@ -38,12 +44,14 @@ const RemindersRoute = RemindersRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/emergency': typeof EmergencyRoute
+  '/explain': typeof ExplainRoute
   '/family': typeof FamilyRoute
   '/reminders': typeof RemindersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/emergency': typeof EmergencyRoute
+  '/explain': typeof ExplainRoute
   '/family': typeof FamilyRoute
   '/reminders': typeof RemindersRoute
 }
@@ -51,20 +59,22 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/emergency': typeof EmergencyRoute
+  '/explain': typeof ExplainRoute
   '/family': typeof FamilyRoute
   '/reminders': typeof RemindersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/emergency' | '/family' | '/reminders'
+  fullPaths: '/' | '/emergency' | '/explain' | '/family' | '/reminders'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/emergency' | '/family' | '/reminders'
-  id: '__root__' | '/' | '/emergency' | '/family' | '/reminders'
+  to: '/' | '/emergency' | '/explain' | '/family' | '/reminders'
+  id: '__root__' | '/' | '/emergency' | '/explain' | '/family' | '/reminders'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   EmergencyRoute: typeof EmergencyRoute
+  ExplainRoute: typeof ExplainRoute
   FamilyRoute: typeof FamilyRoute
   RemindersRoute: typeof RemindersRoute
 }
@@ -83,6 +93,13 @@ declare module '@tanstack/react-router' {
       path: '/emergency'
       fullPath: '/emergency'
       preLoaderRoute: typeof EmergencyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/explain': {
+      id: '/explain'
+      path: '/explain'
+      fullPath: '/explain'
+      preLoaderRoute: typeof ExplainRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/family': {
@@ -105,6 +122,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   EmergencyRoute: EmergencyRoute,
+  ExplainRoute: ExplainRoute,
   FamilyRoute: FamilyRoute,
   RemindersRoute: RemindersRoute,
 }
