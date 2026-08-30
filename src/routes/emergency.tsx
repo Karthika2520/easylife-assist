@@ -30,7 +30,11 @@ function EmergencyPage() {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const contact = familyMembers[0];
+  const contact = familyMembers[0] ?? {
+    name: "Anitha",
+    phone: "+91 98400 11223",
+  };
+
 
   const clear = () => {
     if (timerRef.current) clearInterval(timerRef.current);
